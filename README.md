@@ -23,7 +23,7 @@ Go to Settings-> CT Advance Sitemap for Sitemap Settings
 
 **How to install?** 
 
-Download the latest zip file. Upload it via Uploading Panel or FTP. Then Activate it like other plugins.  
+Download the latest zip file. Upload it via Uploading Panel or FTP. Activate it like other plugins.  
 
 
 ### Changelog
