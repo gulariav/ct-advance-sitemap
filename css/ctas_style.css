@@ -1,0 +1,114 @@
+
+
+#ctas-wrapper {
+    padding-top: 10px;
+    min-width: 763px;
+    margin-right: 20px;
+}
+
+
+#ctas-post-body-content {
+    /*margin-right: 300px;*/
+    float: left;
+    width: auto;
+    margin-bottom: 20px;
+}
+
+
+#inner-sidebar {
+    float: right;
+    clear: right;
+    max-width: 260px;
+    position: relative;
+}
+
+
+.ctas-postbox {
+    position: relative;
+    min-width: 255px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    background: #fff;
+    margin-bottom: 25px;
+}
+
+.ctas-postbox h3.title {
+    font-size: 14px;
+    padding: 8px 12px;
+    margin: 0;
+    line-height: 1.4;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.ctas-postbox .inside {
+    margin: 6px 0 0 0;
+    padding: 0 12px 30px;
+    line-height: 1.4;
+    font-size: 13px;
+}
+
+.clear {
+    clear: both;
+}
+
+.ctas-postbox .inside h4 {
+    clear: both;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.ctas-postbox .inside table {
+    width: 98%;
+    margin-top: 15px;
+}
+
+.ctas-postbox .inside table tr {
+    
+}
+
+
+.ctas-postbox .inside table td {
+    vertical-align: top;
+    padding-right: 15px;
+    padding-bottom: 15px;
+}
+
+.ctas-postbox .inside table td.heading-col {
+    width: 200px;
+}
+
+.ctas-postbox .inside table td h4 {
+    margin-top: 0
+}
+
+.ctas-postbox .inside table td input[type=text] {
+    width: 90%;
+}
+
+.radio-btn-span {
+    clear: both;
+    display: block;
+    line-height: 24px;
+    margin-bottom: 5px;
+}
+
+.taxonomies-list {
+    /*margin-left: 32px;*/
+}
+
+.submit-buttons {
+    margin: 15px 0; 
+}
+
+.updated.success-msg, .update.failure-msg, .ctas-error-notice.error {
+    margin-left: 0;
+}
+
+.button.ctas-large-btn {
+    display: block;
+    width: 100%;
+    line-height: 40px;
+    font-size: 16px;
+    font-weight: 600;
+    vertical-align: middle;
+}
