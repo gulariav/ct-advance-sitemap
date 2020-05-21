@@ -603,7 +603,7 @@ function ctas_render_plugin_settings_page()
 
  			<?php endif; ?>
 
- 			<div id="update-pt-cpt-time-options" class="ctas-postbox" style="">
+ 			<div id="update-pt-cpt-time-options" class="ctas-postbox" style="display: none;">
 	 			<form method="POST">
 
 	 				<h3 class="title">Update Post/Pages/CPT Time.</h3>
