@@ -161,8 +161,8 @@ Sitemap Options Started
 
 global $ctas_sitemap_dir, $master_sitemap_file_url,  $master_sitemap_dir_url, $master_sitemap_file_name, $change_freq, $priority;
 
-$ctas_sitemap_dir = ABSPATH . 'ctas_sitemaps/' ; 
-$master_sitemap_dir_url = home_url('/ctas_sitemaps/');
+$ctas_sitemap_dir = ABSPATH  ; 
+$master_sitemap_dir_url = home_url('/');
 $master_sitemap_file_name = 'sitemap.xml';
 $master_sitemap_file_url = home_url('/').$master_sitemap_file_name;
 
@@ -693,13 +693,14 @@ function ctas_create_sitemap() {
 
 	 //Generate the sitemap files
 
-	$ctas_sitemap_dir = ABSPATH . 'ctas_sitemaps/' ; 
-	if ( wp_mkdir_p( ABSPATH . 'ctas_sitemaps' ) ) 
+	$ctas_sitemap_dir = ABSPATH ; 
+	
+	/*if ( wp_mkdir_p( ABSPATH . 'ctas_sitemaps' ) ) 
 	{
 		$ctas_sitemap_dir = ABSPATH . 'ctas_sitemaps/' ; 
 
 	}
-	else die('Failed to create directory');
+	else die('Failed to create directory');*/
 
 	$error = '';
 
@@ -723,7 +724,7 @@ function ctas_create_sitemap() {
 	{
 		$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 		"\t\t" . '<loc>' . $master_sitemap_dir_url . 'sitemap-misc.xml'.'</loc>' .
-		"\n\t\t" . '<lastmod>' . date( "Y-m-d\TH:i:s", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+		"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 		"\n\t" . '</sitemap>' . "\n";
 	
 	}
@@ -794,7 +795,7 @@ function ctas_create_sitemap() {
 
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "Y-m-d\TH:i:s", current_time( 'timestamp', 0 ) )  . '</lastmod>' .
+				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) )  . '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 
 			}
@@ -828,7 +829,7 @@ function ctas_create_sitemap() {
 			if( create_sitemap_file($before_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "Y-m-d\TH:i:s", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 			}
 			else { $error = 'Failed to create '.$file_name; }
@@ -862,7 +863,7 @@ function ctas_create_sitemap() {
 			if( create_sitemap_file($fetch_posts, $file_name) ) {
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "Y-m-d\TH:i:s", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 			}
 			else { $error = 'Failed to create '.$file_name; }
@@ -944,7 +945,7 @@ function ctas_create_sitemap() {
 					
 					$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 					"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
-					"\n\t\t" . '<lastmod>' . date( "Y-m-d\TH:i:s", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+					"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 					"\n\t" . '</sitemap>' . "\n";
 
 				}
@@ -983,7 +984,7 @@ function ctas_create_sitemap() {
 				
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "Y-m-d\TH:i:s", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 
 			}
@@ -1026,8 +1027,8 @@ function ctas_create_sitemap() {
 function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr_priority)
 {
 	
-	$ctas_sitemap_dir = ABSPATH . 'ctas_sitemaps/' ; 
-	$master_sitemap_dir_url = home_url('/ctas_sitemaps/');
+	$ctas_sitemap_dir = ABSPATH  ; 
+	$master_sitemap_dir_url = home_url('/');
 
 	
 	$sitemap = '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
@@ -1051,9 +1052,11 @@ function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr
 
 		$postdate = explode( " ", $post->post_modified ); //var_dump($postdate);
 
+		$formatted_date = date('c', strtotime($postdate[0] . '' . $postdate[1]) );
+
 		$sitemap .= "\t" . '<url>'. "\n". 
 		"\t\t" . '<loc>' . get_permalink( $post->ID ) . '</loc>' .
-		"\n\t\t" . '<lastmod>' . $postdate[0] . 'T' . $postdate[1] . '</lastmod>' .
+		"\n\t\t" . '<lastmod>' .$formatted_date . '</lastmod>' .
 		"\n\t\t" . '<changefreq>'.$curr_freq.'</changefreq>' .
 		"\n\t\t" . '<priority>'.$curr_priority.'</priority>' .
 		"\n\t" . '</url>' . "\n";
@@ -1246,8 +1249,8 @@ function auto_update_posts_modified_time()
 					//echo '<pre>'; print_r($post); echo '</pre>'; //Enable to test $_POST global variable					
 					update_post_meta( $post->ID, 'auto_update_by_ctas', current_time('mysql') ); //Enable to Debug
 
-					echo 'Post Updated: '.$post->guid.'<br/>';
-					echo 'Post Modified: '.$post->post_modified.'<br/>';
+					//echo 'Post Updated: '.$post->guid.'<br/>';
+					//echo 'Post Modified: '.$post->post_modified.'<br/>';
 
 					$update = array( 'ID' => $post->ID );
 					wp_update_post( $update );
@@ -1339,7 +1342,7 @@ function auto_update_products() {
 		//echo do_action( 'save_post', $product->ID, $product);
 
 
-		
+
 
 		if ( function_exists( 'ak_save_post' ) ) {
 			ak_save_post($product->ID);

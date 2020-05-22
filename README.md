@@ -28,6 +28,4 @@ Download the latest zip file. Upload it via Uploading Panel or FTP. Activate it 
 
 ### Changelog
 --------
-
-##### 1.0.0
-Initial Release<br/>
+Refer to changelog.txt file for changes.

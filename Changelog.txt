@@ -1,0 +1,11 @@
+========================
+Changelog
+========================
+
+1.1.0
+- Removed sitemap directory, all sitemap files created on root directory
+- Date/Time format updated<br/>
+
+
+1.0.0
+- Initial Release<br/>
