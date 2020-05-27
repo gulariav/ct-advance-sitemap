@@ -1,0 +1,17 @@
+
+=============================================================
+Paste this code before ending of ak_save_post() function,
+
+This function will add relation of created page with location
+taxonomy created for Sitemap.
+=============================================================
+
+$get_location_by_city = term_exists($city, 'location');
+
+if( $get_location_by_city ) {
+	wp_set_post_terms( $postId, $get_location_by_city['term_id'], 'location' );
+} else {
+	$insert_location = wp_insert_term( $city ,'location');
+	$location_id = $insert_location['term_id'];
+	if ($location_id) wp_set_object_terms( $postId, $location_id, 'location' );
+}

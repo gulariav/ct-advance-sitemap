@@ -2,6 +2,11 @@
 Changelog
 ========================
 
+1.2.1
+- Added option panel to select post type in Admin Panel.
+- Bug Fixes
+
+
 1.1.0
 - Removed sitemap directory, all sitemap files created on root directory
 - Date/Time format updated<br/>

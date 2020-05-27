@@ -7,7 +7,7 @@ Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 3.5
 Tested up to: 5.0.3
-Version: 1.0.0
+Version: 1.2.1
 License: GPL v2 or later
 package ctas
 */
@@ -582,15 +582,27 @@ function ctas_render_plugin_settings_page()
 
 		 					<p><strong>Warning:</strong> All product pages update automatically. This will use functions inherited from AK Location Served to execute the hooks only, no other information will modify. This feature works only when AK Location served plugin installed and activated. </p>
 
-		 					<p><strong>Limit no. of Product pages</strong>
+		 					<p><strong>Limit no. of Product pages:</strong>
 			 					<input type="text" name="update_limit" class="input-big" value="" />
 			 					<small>Limit no of pages to update, so that server will not overload and throw error. Use it with offset carefully. Default: -1 (All Pages)</small>
 		 					</p>
 
-		 					<p><strong>Offset</strong>
+		 					<p><strong>Offset:</strong>
 			 					<input type="text" name="offset_posts" class="input-big" value="" />
 			 					<small>Offet posts i.e. skip the update counter by no of posts already updated or ignore. Default: 0.</small>
 		 					</p>
+
+		 					<p><strong>Post Type:</strong>
+			 					<select name="auto_update_posttype" class="input-big au_posttype" style="clear: both; display: block;">
+			 						<?php foreach($post_types as $au_post_type): ?>
+			 							<option value="<?php echo $au_post_type->name; ?>"><?php echo $au_post_type->label  .' (' . $au_post_type->name .')'; ?></option>
+			 						<?php endforeach; ?>
+			 					</select>
+			 					<small>Select Post type to auto update.</small>
+		 					</p>
+
+
+		 					
 		
 		 					<div class="submit-buttons">
 								<input name="auto_update_products" class="button button-primary ctas-large-btn" type="submit" value="<?php esc_attr_e( 'Auto Update Products' ); ?>" />
@@ -853,14 +865,12 @@ function ctas_create_sitemap() {
 				  'order'    => 'DESC',
 			));
 
-			$file_name = 'sitemap-older-posts.xml';
-
 			$post_type_name =$curr_post_type_obj->label;
 
 			$file_name = 'sitemap-'. $post_type_name;
 			$file_name = sanitize_title($file_name).'.xml';
 
-			if( create_sitemap_file($fetch_posts, $file_name) ) {
+			if( create_sitemap_file($fetch_posts, $file_name,$curr_freq, $curr_priority) ) {
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
 				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
 				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
@@ -1308,6 +1318,7 @@ function auto_update_products() {
 	
 	$update_limit = sanitize_text_field( $_POST['update_limit'] );
 	$offset_posts = sanitize_text_field( $_POST['offset_posts'] );
+	$au_posttype = sanitize_text_field( $_POST['auto_update_posttype'] );
 
 	$numberposts  = ( $update_limit > 0 ) ? $update_limit : -1 ; 
 	$offset  = ( $offset_posts > 0 ) ? $offset_posts : 0 ; 
@@ -1318,8 +1329,9 @@ function auto_update_products() {
 		'posts_per_page' => $numberposts,
 		'offset' => $offset,
 		'post_status' => 'publish',
-		'post_type'  => array( 'uproducts' ) //array( 'post', 'page' )
+		'post_type'  => array( $au_posttype ) //array( 'post', 'page' )
 	);
+
 
 	$get_products = get_posts( $args );
 
