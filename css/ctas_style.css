@@ -22,6 +22,11 @@
     margin-left: 2%;
 }
 
+#ctas-wrapper h2.title .ctas-version {
+    font-size: 12px;
+    font-weight: normal;
+}
+
 
 .ctas-postbox {
     position: relative;

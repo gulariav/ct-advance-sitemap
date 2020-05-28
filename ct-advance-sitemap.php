@@ -2,7 +2,7 @@
 /*
 Plugin Name: CT Advance Sitemap
 Description: Advance XML Sitemap with customizable options. For Documentation, Please visit Plugin site.
-Plugin URI: https://github.com/gulariav/
+Plugin URI: https://github.com/gulariav/ct-advance-sitemap
 Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 3.5
@@ -159,7 +159,18 @@ Sitemap Options Started
 */
 
 
-global $ctas_sitemap_dir, $master_sitemap_file_url,  $master_sitemap_dir_url, $master_sitemap_file_name, $change_freq, $priority;
+global $ctas_plugin_data, $ctas_sitemap_dir, $master_sitemap_file_url,  $master_sitemap_dir_url, $master_sitemap_file_name, $change_freq, $priority;
+
+
+if ( is_admin() ) {
+
+    if( ! function_exists('get_plugin_data') ) {
+        require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+    }
+
+    $ctas_plugin_data =  get_plugin_data( __FILE__ ); 
+ 
+}
 
 $ctas_sitemap_dir = ABSPATH  ; 
 $master_sitemap_dir_url = home_url('/');
@@ -168,6 +179,8 @@ $master_sitemap_file_url = home_url('/').$master_sitemap_file_name;
 
 $change_frequencies = array('always','hourly','daily','weekly','monthly','yearly','never');
 $priorities = array('0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0');
+
+
 
 
 
@@ -182,7 +195,7 @@ function ctas_render_plugin_settings_page()
 
 	//ctas_create_sitemap(); // Enable to Create/update sitemap while open this page. 
 
-	global $ctas_sitemap_dir; global $change_frequencies; global $priorities;
+	global $ctas_sitemap_dir; global $change_frequencies; global $priorities; global $ctas_plugin_data;
 
 
 
@@ -263,7 +276,7 @@ function ctas_render_plugin_settings_page()
 
 	<div id="ctas-wrapper" class="">
 
-	 	<h2 class="title">Advance XML Sitemap Generator</h2>
+	 	<h2 class="title">Advance XML Sitemap Generator <span class="ctas-version">v<?php echo $ctas_plugin_data['Version']; ?></span></h2>
 	 	
 
 	 	<div id="ctas-post-body-content">
