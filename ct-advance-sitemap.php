@@ -7,7 +7,7 @@ Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 3.5
 Tested up to: 5.0.3
-Version: 1.2.2
+Version: 2.0.0
 License: GPL v2 or later
 package ctas
 */
@@ -105,6 +105,162 @@ function ctas_retister_taxonomy() {
 
 
 /*
+ * Defining Global varaibles, which will use across the sitemap options.  
+ * 
+ * $ctas_sitemap_dir: hold sitemap dirctory 
+ * $master_sitemap_file_url: Master sitemap file URL, default "/sitemap.xml"
+ * $ctas_sitemap_dir_uri: Master sitemap Directory Public URL, default "ctas_sitemaps" under home directory.
+ * $master_sitemap_file_name: Master sitemap physical filename "sitemap.xml" 
+ * 
+ * But it not created then create it here on initialize the plugin. 
+*/
+
+
+
+global 	$ctas_plugin_data, 
+		$ctas_sitemap_dir, 
+		$master_sitemap_file_url,  
+		$ctas_sitemap_dir_uri, 
+		$master_sitemap_file_name, 
+		$change_freq, 
+		$priority;
+
+
+$ctas_sitemap_dir = ABSPATH  ; 
+$ctas_sitemap_dir_uri = home_url('/');
+
+
+if ( is_multisite() ) { 
+	$upload_dir   = wp_upload_dir(); //var_dump($upload_dir);
+
+	$ctas_sitemap_dir = $upload_dir['basedir']. '/ctas_sitemaps/'; //Changed the directory for MU
+
+	$ctas_sitemap_dir_uri = $upload_dir['baseurl'].'/ctas_sitemaps/'; //Changed the URL for MU
+}
+
+if ( wp_mkdir_p( $ctas_sitemap_dir ) ) 	{
+		//$ctas_sitemap_dir = ABSPATH . 'ctas_sitemaps/' ; 
+
+}
+else die('Failed to create directory');
+
+
+$master_sitemap_file_name = 'sitemap.xml';
+$master_sitemap_file_url = $ctas_sitemap_dir_uri.$master_sitemap_file_name;
+
+
+
+$change_frequencies = array('always','hourly','daily','weekly','monthly','yearly','never');
+$priorities = array('0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0');
+
+/***************** Plugin Global Options & Settings ends *************************/
+
+
+if ( is_admin() ) {
+
+    if( ! function_exists('get_plugin_data') ) {
+        require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+    }
+
+    $ctas_plugin_data =  get_plugin_data( __FILE__ ); 
+ 
+}
+
+
+
+//Rewrite Rules
+function ctas_sitemap_rewrites() {
+
+	if ( is_multisite() ) { 
+
+		global $wp;
+		$wp->add_query_var( 'ctas_sf' );
+
+	    add_rewrite_rule( 'sitemap.xml', 'index.php?ctas_sf=default', 'top' );
+	    add_rewrite_rule( 'sitemap-+([a-zA-Z0-9_-]+)?\.xml$', 'index.php?ctas_sf=$matches[1]', 'top' );
+
+	}
+
+
+}
+add_action( 'init', 'ctas_sitemap_rewrites', 99 );
+
+
+
+function template_render_sitemap_file_mu( $template ) {
+
+	global $ctas_sitemap_dir, $ctas_sitemap_dir_uri, $master_sitemap_file_name, $wp_query, $post;
+
+	$ctas_sf = get_query_var( 'ctas_sf' );
+	$file = '';
+
+
+	if ( ! empty( $ctas_sf ) && is_multisite() ) {
+
+		if ( 'default' == $ctas_sf ) {
+			
+			$file = $ctas_sitemap_dir.$master_sitemap_file_name;
+		
+		} else { 
+
+			$file_path = $ctas_sitemap_dir.'sitemap-'.$ctas_sf.'.xml';
+
+			if ( file_exists( $file_path ) ) {
+				$file = $file_path;
+			}
+			
+		}
+
+
+		if (!empty ($file)) {	
+			//echo $file;	
+			header( 'Content-type: text/xml' );
+			header('Pragma: public');
+			header('Cache-control: private');
+			//header('Expires: -1');
+			readfile($file);
+			die();
+		}
+		else {
+			$wp_query->set_404();
+	  		status_header( 404 );
+	  		get_template_part( 404 ); exit();
+	    }
+
+
+	}
+	return $template;
+}
+add_action( 'template_include', 'template_render_sitemap_file_mu' );
+
+
+
+
+/*add_action( 'template_include', function( $template ) {
+    if ( get_query_var( 'ctas_sit' ) == false || get_query_var( 'ctas_sit' ) == '' ) {
+        return $template;
+    }
+ 
+    return plugin_dir_path( __FILE__ ) . '/ctas_render_file.php';
+} );*/
+
+
+function ctas_prevent_slash_on_map_variable( $redirect ) {
+	if ( get_query_var( 'ctas_sf' ) ) {
+		return false;
+	}
+	return $redirect;
+}
+add_filter( 'redirect_canonical', 'ctas_prevent_slash_on_map_variable' );
+
+
+
+
+
+
+
+
+/*
  * Add plugin setting page into backend option. 
  * This page will be under Settings Menu, hold all sitemap configuration options.   
 */
@@ -137,49 +293,10 @@ function ctas_scripts( $page ) {
 }
 
 
-/***************** Plugin Global Options & Settings ends *************************/
-
-
-
 
 /*****************************************************
 Sitemap Options Started
 ******************************************************/
-
-
-/*
- * Defining Global varaibles, which will use across the sitemap options.  
- * 
- * $ctas_sitemap_dir: hold sitemap dirctory 
- * $master_sitemap_file_url: Master sitemap file URL, default "/sitemap.xml"
- * $master_sitemap_dir_url: Master sitemap Directory Public URL, default "ctas_sitemaps" under home directory.
- * $master_sitemap_file_name: Master sitemap physical filename "sitemap.xml" 
- * 
- * But it not created then create it here on initialize the plugin. 
-*/
-
-
-global $ctas_plugin_data, $ctas_sitemap_dir, $master_sitemap_file_url,  $master_sitemap_dir_url, $master_sitemap_file_name, $change_freq, $priority;
-
-
-if ( is_admin() ) {
-
-    if( ! function_exists('get_plugin_data') ) {
-        require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-    }
-
-    $ctas_plugin_data =  get_plugin_data( __FILE__ ); 
- 
-}
-
-$ctas_sitemap_dir = ABSPATH  ; 
-$master_sitemap_dir_url = home_url('/');
-$master_sitemap_file_name = 'sitemap.xml';
-$master_sitemap_file_url = home_url('/').$master_sitemap_file_name;
-
-$change_frequencies = array('always','hourly','daily','weekly','monthly','yearly','never');
-$priorities = array('0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0');
-
 
 
 
@@ -195,7 +312,7 @@ function ctas_render_plugin_settings_page()
 
 	//ctas_create_sitemap(); // Enable to Create/update sitemap while open this page. 
 
-	global $ctas_sitemap_dir; global $change_frequencies; global $priorities; global $ctas_plugin_data;
+	global $ctas_sitemap_dir; global $ctas_sitemap_dir_uri; global $change_frequencies; global $priorities; global $ctas_plugin_data;
 
 
 
@@ -511,10 +628,12 @@ function ctas_render_plugin_settings_page()
 
 	 					<?php 
 
-	 					$master_sitemap_file_url = home_url('/sitemap.xml');
+	 					global $master_sitemap_file_url, $master_sitemap_file_name; // = home_url('/sitemap.xml');
+
+	 					$sitemap_link = home_url('/').$master_sitemap_file_name;
 
 	 					echo '<p><strong>Master Sitemap URL: </strong>';
-	 					echo '<a href="'.$master_sitemap_file_url.'" target="_blank">'.$master_sitemap_file_url.'</a>';
+	 					echo '<a href="'.$sitemap_link.'" target="_blank">'.$sitemap_link.'</a>';
 	 					echo '</p>';
 
 	 					?>
@@ -537,18 +656,18 @@ function ctas_render_plugin_settings_page()
 
 	 					<?php 
 
-	 					global $ctas_sitemap_dir,  $master_sitemap_dir_url, $master_sitemap_file_name, $master_sitemap_file_url;
+	 					global $ctas_sitemap_dir,  $ctas_sitemap_dir_uri, $master_sitemap_file_name, $master_sitemap_file_url;
 
 	 					$ctas_sitemap_generated_time = get_option('ctas_sitemap_generated_time');
 
 	 					if ( $ctas_sitemap_generated_time )
  							echo '<p><strong>Sitemap Generated on: </strong><br/>' . $ctas_sitemap_generated_time.'</p>';
 
-	 					echo '<p><strong>Master Sitemap URL: </strong><br/>' . $master_sitemap_file_url.'</p>';						
+	 					//echo '<p><strong>Master Sitemap URL: </strong><br/>' . $master_sitemap_file_url.'</p>';						
 
 	 					echo '<p><strong>Sitemap Directory Absolute Path: </strong><br/>' . $ctas_sitemap_dir.'</p>';
 
-	 					echo '<p><strong>Sitemap Directory URL: </strong><br/>' . $master_sitemap_dir_url.'</p>';
+	 					//echo '<p><strong>Sitemap Directory URL: </strong><br/>' . $ctas_sitemap_dir_uri.'</p>';
 
 	 					echo '<p><strong>Master Sitemap Filename: </strong><br/>' . $master_sitemap_file_name.'</p>';
 
@@ -718,14 +837,10 @@ function ctas_create_sitemap() {
 
 	 //Generate the sitemap files
 
-	$ctas_sitemap_dir = ABSPATH ; 
+	//$ctas_sitemap_dir = ABSPATH ; 
+	global $ctas_sitemap_dir,   $ctas_sitemap_dir_uri, $master_sitemap_file_name;
 	
-	/*if ( wp_mkdir_p( ABSPATH . 'ctas_sitemaps' ) ) 
-	{
-		$ctas_sitemap_dir = ABSPATH . 'ctas_sitemaps/' ; 
-
-	}
-	else die('Failed to create directory');*/
+	
 
 	$error = '';
 
@@ -735,9 +850,8 @@ function ctas_create_sitemap() {
 	 * Create Master sitemap file.
 	*/
 	/*$master_sitemap_file_name = 'sitemap.xml';
-	$master_sitemap_dir_url = home_url('/ctas_sitemaps/');*/
+	$ctas_sitemap_dir_uri = home_url('/ctas_sitemaps/');*/
 
-	global $ctas_sitemap_dir,  $master_sitemap_dir_url, $master_sitemap_file_name;
 
 
 	$master_sitemap_fcon = '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
@@ -748,7 +862,7 @@ function ctas_create_sitemap() {
 	if( create_misc_sitemap() )
 	{
 		$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-		"\t\t" . '<loc>' . $master_sitemap_dir_url . 'sitemap-misc.xml'.'</loc>' .
+		"\t\t" . '<loc>' . home_url('/')  . 'sitemap-misc.xml'.'</loc>' .
 		"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 		"\n\t" . '</sitemap>' . "\n";
 	
@@ -819,7 +933,7 @@ function ctas_create_sitemap() {
 			if( create_sitemap_file($last_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
 
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
+				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
 				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) )  . '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 
@@ -853,7 +967,7 @@ function ctas_create_sitemap() {
 
 			if( create_sitemap_file($before_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
+				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
 				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 			}
@@ -885,7 +999,7 @@ function ctas_create_sitemap() {
 
 			if( create_sitemap_file($fetch_posts, $file_name,$curr_freq, $curr_priority) ) {
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
+				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
 				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 			}
@@ -967,7 +1081,7 @@ function ctas_create_sitemap() {
 				{
 					
 					$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-					"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
+					"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
 					"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 					"\n\t" . '</sitemap>' . "\n";
 
@@ -1006,7 +1120,7 @@ function ctas_create_sitemap() {
 			{
 				
 				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( $master_sitemap_dir_url ) . $file_name.'</loc>' .
+				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
 				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
 				"\n\t" . '</sitemap>' . "\n";
 
@@ -1028,14 +1142,14 @@ function ctas_create_sitemap() {
 
 	$master_sitemap_fcon .= '</sitemapindex>';
 
-	$fp = fopen( ABSPATH . $master_sitemap_file_name , 'w' );
+	$fp = fopen( $ctas_sitemap_dir . $master_sitemap_file_name , 'w' );
 
 	$result = fwrite( $fp, $master_sitemap_fcon );
 	fclose( $fp );
 
 	if ( $result ) {
 
-		$file_link = home_url('/') . $master_sitemap_file_name;
+		$file_link = $ctas_sitemap_dir_uri . $master_sitemap_file_name; 
 
 		echo '<div class="updated success-msg"><p><strong>Master Sitemap Updated: <a href="'.$file_link.'" target="_blank">
 		'.$file_link.'</a></strong></p></div>'; 
@@ -1050,8 +1164,9 @@ function ctas_create_sitemap() {
 function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr_priority)
 {
 	
-	$ctas_sitemap_dir = ABSPATH  ; 
-	$master_sitemap_dir_url = home_url('/');
+	global $ctas_sitemap_dir; //$ctas_sitemap_dir = ABSPATH  ;  
+
+	global $ctas_sitemap_dir_uri; // = home_url('/');
 
 	
 	$sitemap = '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
@@ -1099,7 +1214,7 @@ function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr
 	if ( $result ) {
 		unset($sitemap);
 
-		$file_link = $master_sitemap_dir_url . $msf_file_name;
+		$file_link = $ctas_sitemap_dir_uri . $msf_file_name;
 
 		echo '<div class="updated success-msg"><p>Sitemap Created: <a href="'.$file_link.'" target="_blank">
 		'.$file_link.'</a></p></div>'; 
@@ -1114,7 +1229,7 @@ function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr
 function create_misc_sitemap()
 {
 
-	global $ctas_sitemap_dir,  $master_sitemap_dir_url;
+	global $ctas_sitemap_dir,  $ctas_sitemap_dir_uri;
 
 	$curr_time = date( 'c', current_time( 'timestamp', 0 ) );
 
@@ -1141,7 +1256,7 @@ function create_misc_sitemap()
 	if ( $result ) {
 		unset($sitemap);
 
-		$file_link = $master_sitemap_dir_url . $file_name;
+		$file_link = $ctas_sitemap_dir_uri . $file_name;
 
 		echo '<div class="updated success-msg"><p>Misc Sitemap Created: <a href="'.$file_link.'" target="_blank">
 		'.$file_link.'</a></p></div>'; 
@@ -1173,7 +1288,11 @@ function ctas_activate()
         wp_schedule_event( time(), 'twicedaily', 'ctas_twicedaily_event' );
     }
 
+    flush_rewrite_rules();
+
 }
+
+
 
 
 register_deactivation_hook( __FILE__, 'ctas_deactivation' );
@@ -1181,6 +1300,7 @@ register_deactivation_hook( __FILE__, 'ctas_deactivation' );
 function ctas_deactivation() {
     wp_clear_scheduled_hook( 'ctas_hourly_event' );
     wp_clear_scheduled_hook( 'ctas_twicedaily_event' );
+    flush_rewrite_rules();
 }
 
 
@@ -1342,6 +1462,9 @@ function auto_update_products() {
 		'posts_per_page' => $numberposts,
 		'offset' => $offset,
 		'post_status' => 'publish',
+		'meta_key'	=> 'ak_primary_city',
+		'orderby' => 'ID',
+    	'order'  => 'ASC',
 		'post_type'  => array( $au_posttype ) //array( 'post', 'page' )
 	);
 
@@ -1377,7 +1500,7 @@ function auto_update_products() {
 	}
 
 	if( $i === 0 )      
-	  		echo '<div class="error failure-msg ctas-error-notice"> <p>Zero Location copied.</p> </div>';
+	  		echo '<div class="error failure-msg ctas-error-notice"> <p>Zero Product updated.</p> </div>';
 	else
 	  	echo '<div class="updated success-msg"><p>Products Updated.</p></div>';
 
