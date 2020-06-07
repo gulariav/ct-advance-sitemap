@@ -7,7 +7,7 @@ Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 3.5
 Tested up to: 5.0.3
-Version: 2.0.0
+Version: 2.0.1
 License: GPL v2 or later
 package ctas
 */
@@ -342,6 +342,7 @@ function ctas_render_plugin_settings_page()
 
 		//Now, Generate the Sitemap. 
 		ctas_create_sitemap();
+		flush_rewrite_rules();
 
 	}
 
@@ -1151,8 +1152,16 @@ function ctas_create_sitemap() {
 
 		$file_link = $ctas_sitemap_dir_uri . $master_sitemap_file_name; 
 
-		echo '<div class="updated success-msg"><p><strong>Master Sitemap Updated: <a href="'.$file_link.'" target="_blank">
-		'.$file_link.'</a></strong></p></div>'; 
+		$mu_file_link = home_url('/') . $master_sitemap_file_name;
+
+
+		if ( is_multisite() ) {
+			echo '<div class="updated success-msg"><p><strong>Master Sitemap Updated: <a href="'.$mu_file_link.'" target="_blank">
+			'.$mu_file_link.'</a></strong></p></div>'; 
+		} else {
+			echo '<div class="updated success-msg"><p><strong>Master Sitemap Updated: <a href="'.$file_link.'" target="_blank">
+			'.$file_link.'</a></strong></p></div>'; 
+		}
 
 		update_option( 'ctas_sitemap_generated_time', current_time('mysql'), false );
 	}
@@ -1216,8 +1225,16 @@ function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr
 
 		$file_link = $ctas_sitemap_dir_uri . $msf_file_name;
 
-		echo '<div class="updated success-msg"><p>Sitemap Created: <a href="'.$file_link.'" target="_blank">
-		'.$file_link.'</a></p></div>'; 
+		$mu_file_link = home_url('/') . $msf_file_name;
+
+
+		if ( is_multisite() ) {
+			echo '<div class="updated success-msg"><p>Sitemap Created: <a href="'.$mu_file_link.'" target="_blank">'.$mu_file_link.'</a></p></div>'; 
+		} else {
+			echo '<div class="updated success-msg"><p>Sitemap Created: <a href="'.$file_link.'" target="_blank">'.$file_link.'</a></p></div>'; 
+		}
+
+
 		return true;
 	}
 	else {
@@ -1258,8 +1275,14 @@ function create_misc_sitemap()
 
 		$file_link = $ctas_sitemap_dir_uri . $file_name;
 
-		echo '<div class="updated success-msg"><p>Misc Sitemap Created: <a href="'.$file_link.'" target="_blank">
-		'.$file_link.'</a></p></div>'; 
+		$mu_file_link = home_url('/') . $file_name;
+
+		if ( is_multisite() ) {
+			echo '<div class="updated success-msg"><p>Misc Sitemap Created: <a href="'.$mu_file_link.'" target="_blank">'.$mu_file_link.'</a></p></div>'; 
+		} else {
+			echo '<div class="updated success-msg"><p>Misc Sitemap Created: <a href="'.$file_link.'" target="_blank">'.$file_link.'</a></p></div>'; 
+		}
+ 
 		return true;
 	}
 	else {

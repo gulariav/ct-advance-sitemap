@@ -2,6 +2,11 @@
 Changelog
 ========================
 
+2.0.1
+- flush_rewrite_rules() when update sitemap.  
+- Sitemap links updated for multisite.
+- Bug Fixes
+
 2.0.0
 - Multisite support added. 
 - Files store location changed for multisite, they will show through rewrite rules
