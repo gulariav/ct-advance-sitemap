@@ -7,7 +7,7 @@ Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 3.5
 Tested up to: 5.0.3
-Version: 2.0.1
+Version: 2.0.2
 License: GPL v2 or later
 package ctas
 */

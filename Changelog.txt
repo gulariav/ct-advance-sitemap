@@ -2,6 +2,9 @@
 Changelog
 ========================
 
+2.0.2
+- updated location served integration code to check is active plugin. Multisite support.
+
 2.0.1
 - flush_rewrite_rules() when update sitemap.  
 - Sitemap links updated for multisite.
