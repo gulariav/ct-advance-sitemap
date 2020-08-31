@@ -2,6 +2,11 @@
 Changelog
 ========================
 
+2.0.3
+- WP support check 
+- Mininum required version updated
+- Content check for sitemap, if not havubg url then not generate the child sitemap. For posts older/latest only. 
+
 2.0.2
 - updated location served integration code to check is active plugin. Multisite support.
 

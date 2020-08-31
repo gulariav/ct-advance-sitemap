@@ -5,9 +5,9 @@ Description: Advance XML Sitemap with customizable options. For Documentation, P
 Plugin URI: https://github.com/gulariav/ct-advance-sitemap
 Author: Vishal Gularia
 Author URI: https://clicktecs.com/
-Requires at least: 3.5
-Tested up to: 5.0.3
-Version: 2.0.2
+Requires at least: 4.6.14
+Tested up to: 5.4
+Version: 2.0.3
 License: GPL v2 or later
 package ctas
 */
@@ -931,17 +931,19 @@ function ctas_create_sitemap() {
 
 			$file_name = 'sitemap-latest-posts.xml';
 
-			if( create_sitemap_file($last_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
+			if($last_six_months_posts) { 
 
-				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) )  . '</lastmod>' .
-				"\n\t" . '</sitemap>' . "\n";
+				if( create_sitemap_file($last_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
+
+					$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
+					"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
+					"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) )  . '</lastmod>' .
+					"\n\t" . '</sitemap>' . "\n";
+
+				}
+				else { $error = 'Failed to create '.$file_name; }
 
 			}
-			else { $error = 'Failed to create '.$file_name; }
-
-
 			/*
 			 * Get all posts modified before last six months, which are not included in above file. Create a file with it. 	
 			*/
@@ -966,14 +968,16 @@ function ctas_create_sitemap() {
 
 			$file_name = 'sitemap-older-posts.xml';
 
-			if( create_sitemap_file($before_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
-				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
-				"\n\t" . '</sitemap>' . "\n";
-			}
-			else { $error = 'Failed to create '.$file_name; }
+			if($before_six_months_posts) {
 
+				if( create_sitemap_file($before_six_months_posts, $file_name, $curr_freq, $curr_priority) ) {
+					$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
+					"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
+					"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+					"\n\t" . '</sitemap>' . "\n";
+				}
+				else { $error = 'Failed to create '.$file_name; }
+			}
 
 
 		} //$ct_post_type == 'post' && $post_type_details['sitemap_by'] == 'default'

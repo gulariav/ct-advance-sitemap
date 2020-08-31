@@ -2,8 +2,8 @@
 
 Contributors: gulariav <br/>
 Tags: xml-sitemap, taxonomy based sitemap<br/>
-Requires at least: 3.5<br/>
-Tested up to: 5.3.2<br/>
+Requires at least: 4.6.14<br/>
+Tested up to: 5.4<br/>
 License: GPL v2 or later<br/>
 
 
