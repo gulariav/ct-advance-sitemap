@@ -6,8 +6,8 @@ Plugin URI: https://github.com/gulariav/ct-advance-sitemap
 Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 4.6.14
-Tested up to: 6.0
-Version: 2.1
+Tested up to: 6.2
+Version: 2.2
 License: GPL v2 or later
 package ctas
 */
@@ -327,17 +327,27 @@ function ctas_render_plugin_settings_page()
 	if( isset( $_POST['generate_sitemap_btn'] ) )  {
 		
 
-		/*$files = glob($ctas_sitemap_dir.'*'); // get all file names 
+		/*
+		Check if this a multisite network. 
+		If yes, delete all the files in microsite folder. 
+
+		Additional parameters to enable to a pertifular microsite && get_current_blog_id() == 52 
+		*/
+		if(  is_multisite() && ! is_main_site() ) {
+			$files = glob($ctas_sitemap_dir.'*'); // get all file names 
 
 
-		// Delete all the files in sitemap directory.
+			// Delete all the files in sitemap directory.
 
-		if ( $files ) : 
-			foreach($files as $file) : // iterate files
-			  	if(is_file($file))
-			    unlink($file); // delete file
-			endforeach; 
-		endif;*/
+			if ( $files ) : 
+				foreach($files as $file) : // iterate files
+				  	if(is_file($file)) {
+				    	//echo $file; 
+				    	unlink($file); // delete file
+				  	}
+				endforeach; 
+			endif;
+		}
 
 
 		//Now, Generate the Sitemap. 
@@ -1221,6 +1231,50 @@ function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr
 
 	global $ctas_sitemap_dir_uri; // = home_url('/');
 
+	/*
+	Check if file exist. 
+	In case location taxonomy enabled for two post types for example, 
+	then append the same xml file for second post type
+
+	Additional parameters to enable to a pertifular microsite && get_current_blog_id() == 52 
+	*/
+
+	if(  is_multisite()  && file_exists($ctas_sitemap_dir . $msf_file_name) && strpos($msf_file_name, '-location-') ) {
+		
+
+		//echo '<pre>Catch'.$ctas_sitemap_dir . $msf_file_name; echo '<br/>'; //Print Filename
+
+		$xml = simplexml_load_file($ctas_sitemap_dir . $msf_file_name); //var_dump($xml);
+
+		foreach( $msf_posts_array as $post ) {
+			setup_postdata( $post );
+
+			//echo '<pre>'; print_r($post); echo '</pre>'; //Enable to test $_POST global variable
+
+			$postdate = explode( " ", $post->post_modified ); //var_dump($postdate);
+
+			$formatted_date = date('c', strtotime($postdate[0] . '' . $postdate[1]) );
+
+			//$sitemap .= "\t" . '<url>'. "\n". 
+			$sitemap ="\t\t" . '<loc>' . get_permalink( $post->ID ) . '</loc>' .
+			"\n\t\t" . '<lastmod>' .$formatted_date . '</lastmod>' .
+			"\n\t\t" . '<changefreq>'.$curr_freq.'</changefreq>' .
+			"\n\t\t" . '<priority>'.$curr_priority.'</priority>' ;
+			//"\n\t" . '</url>' . "\n";
+
+			$node = $xml->addChild("url"); //var_dump($node); //exit;
+			$node->addChild('loc', get_permalink( $post->ID ) );
+			$node->addChild('lastmod', $formatted_date );
+			$node->addChild('changefreq', $curr_freq );
+			$node->addChild('priority', $curr_priority );
+		}
+
+		//echo '<br/><br/>';
+		//echo $xml->asXML();
+		$res = $xml->asXML($ctas_sitemap_dir . $msf_file_name);
+
+		return true; exit;
+	}
 	
 	$sitemap = '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
 	$sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'. "\n";
@@ -1238,8 +1292,6 @@ function create_sitemap_file($msf_posts_array, $msf_file_name, $curr_freq, $curr
 		setup_postdata( $post );
 
 		//echo '<pre>'; print_r($post); echo '</pre>'; //Enable to test $_POST global variable
-
-		//echo 'vishal'.$post->post_modified;
 
 		$postdate = explode( " ", $post->post_modified ); //var_dump($postdate);
 

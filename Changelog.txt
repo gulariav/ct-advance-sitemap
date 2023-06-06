@@ -1,6 +1,10 @@
 ========================
 Changelog
 ========================
+2.2
+- For multisite, Check, if location taxonomy enabled for two post types, then append the same xml file for second post type. 
+- For multisite, delete all files before generating the sitemap. Only for microsites, not for corporate site. 
+
 2.1
 - Break sitemap into parts for 1000+ posts. 
 
