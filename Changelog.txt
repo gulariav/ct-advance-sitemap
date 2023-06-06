@@ -1,6 +1,8 @@
 ========================
 Changelog
 ========================
+2.1
+- Break sitemap into parts for 1000+ posts. 
 
 2.0.3
 - WP support check 

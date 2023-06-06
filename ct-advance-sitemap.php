@@ -6,8 +6,8 @@ Plugin URI: https://github.com/gulariav/ct-advance-sitemap
 Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 4.6.14
-Tested up to: 5.4
-Version: 2.0.3
+Tested up to: 6.0
+Version: 2.1
 License: GPL v2 or later
 package ctas
 */
@@ -990,25 +990,65 @@ function ctas_create_sitemap() {
 		else if( $ct_post_type != '' && $post_type_details['sitemap_by'] == 'default')
 		{
 
-			$fetch_posts = get_posts(array(
-				'numberposts' => -1,
-				'exclude'	 => $excluded_posts_id,
-				  'post_type'  => array( $ct_post_type ), //array( 'post', 'page' ),
-				  'order'    => 'DESC',
-			));
+			$total_posts = wp_count_posts($ct_post_type); //var_dump($total_posts->publish); //exit;
 
-			$post_type_name =$curr_post_type_obj->label;
+			if($total_posts->publish > 1000 ) 
+			{
+				$sitemap_part = 1;
+				$i=$total_posts->publish;
+				$offset_posts = 0;
+				while($i>=0) 
+				{
 
-			$file_name = 'sitemap-'. $post_type_name;
-			$file_name = sanitize_title($file_name).'.xml';
+					$fetch_posts = get_posts(array(
+						'numberposts' => 1000,
+						'offset'      => $offset_posts,
+						'exclude'	 => $excluded_posts_id,
+						  'post_type'  => array( $ct_post_type ), //array( 'post', 'page' ),
+						  'order'    => 'DESC',
+					));
 
-			if( create_sitemap_file($fetch_posts, $file_name,$curr_freq, $curr_priority) ) {
-				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
-				"\n\t" . '</sitemap>' . "\n";
-			}
-			else { $error = 'Failed to create '.$file_name; }
+					$post_type_name =$curr_post_type_obj->label;
+
+					$file_name = 'sitemap-'. $post_type_name.'-part-'.$sitemap_part;
+					$file_name = sanitize_title($file_name).'.xml';
+
+					if( create_sitemap_file($fetch_posts, $file_name,$curr_freq, $curr_priority) ) {
+						$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
+						"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
+						"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+						"\n\t" . '</sitemap>' . "\n";
+					}
+					else { $error = 'Failed to create '.$file_name; }
+
+					$i = $i-1000;
+					$offset_posts = $offset_posts + 1000;
+					$sitemap_part++;
+				}
+
+			} else {
+				$fetch_posts = get_posts(array(
+					'numberposts' => -1,
+					'exclude'	 => $excluded_posts_id,
+					  'post_type'  => array( $ct_post_type ), //array( 'post', 'page' ),
+					  'order'    => 'DESC',
+				));
+
+				$post_type_name =$curr_post_type_obj->label;
+
+				$file_name = 'sitemap-'. $post_type_name;
+				$file_name = sanitize_title($file_name).'.xml';
+
+				if( create_sitemap_file($fetch_posts, $file_name,$curr_freq, $curr_priority) ) {
+					$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
+					"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
+					"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+					"\n\t" . '</sitemap>' . "\n";
+				}
+				else { $error = 'Failed to create '.$file_name; }
+			} 
+
+			
 
 		}	
 		
@@ -1383,10 +1423,25 @@ function auto_update_posts_modified_time()
 			if ( $post_type_details['sitemap_by'] != '' ) 
 			{
 
+				$excl_posts_sitemap_by_default = $ctas_options[$ct_post_type]['excluded_posts_id'];
+
+				$excl_posts = explode(',' ,$excl_posts_sitemap_by_default); //var_dump($excl_posts);
+
+				$excluded_posts_id = array();
+
+				foreach($excl_posts as $post_id )
+				{	
+					$post_id = trim($post_id);
+					if( !empty($post_id) ) $excluded_posts_id[] = $post_id;
+				}
+
+				//var_dump($excluded_posts_id); //Enable to check exclude post id
+
 				$args = array(
 					'numberposts' => 10,
 					'posts_per_page' => 10,
 					'post_status' => 'publish',
+					'exclude'	 => $excluded_posts_id,
 					'post_type'  => array( $ct_post_type ), //array( 'post', 'page' )
 					'date_query' => array(
 						array(
@@ -1423,7 +1478,19 @@ function auto_update_posts_modified_time()
 					//echo 'Post Modified: '.$post->post_modified.'<br/>';
 
 					$update = array( 'ID' => $post->ID );
+
+					// before saving post
+					remove_filter('content_save_pre', 'wp_filter_post_kses');
+					remove_filter('content_filtered_save_pre', 'wp_filter_post_kses');
+
 					wp_update_post( $update );
+
+					// after saving post
+					add_filter('content_save_pre', 'wp_filter_post_kses');
+					add_filter('content_filtered_save_pre', 'wp_filter_post_kses');
+
+					//These filter only work for content. 
+
 
 				}
 
