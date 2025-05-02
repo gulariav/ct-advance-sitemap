@@ -1,6 +1,12 @@
 ========================
 Changelog
 ========================
+2.4
+- Added support to respect noindex marked by yoast plugin. Ref. get_yoast_noindex_post_ids()
+
+2.3
+- Added functionality to split sitemaps for main pages, as in some cases they execedded the 10,000 pages.  
+
 2.2
 - For multisite, Check, if location taxonomy enabled for two post types, then append the same xml file for second post type. 
 - For multisite, delete all files before generating the sitemap. Only for microsites, not for corporate site. 

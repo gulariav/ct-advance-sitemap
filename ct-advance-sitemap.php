@@ -7,7 +7,7 @@ Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 4.6.14
 Tested up to: 6.2
-Version: 2.2
+Version: 2.4
 License: GPL v2 or later
 package ctas
 */
@@ -893,6 +893,8 @@ function ctas_create_sitemap() {
 		$curr_freq = $ctas_options[$ct_post_type]['change_frequency'];
 		$curr_priority = $ctas_options[$ct_post_type]['priority'];
 
+
+		// 1. Get excluded posts from options
 		$excl_posts_sitemap_by_default = $ctas_options[$ct_post_type]['excluded_posts_id'];
 
 		$excl_posts = explode(',' ,$excl_posts_sitemap_by_default); //var_dump($excl_posts);
@@ -903,7 +905,15 @@ function ctas_create_sitemap() {
 		{	
 			$post_id = trim($post_id);
 			if( !empty($post_id) ) $excluded_posts_id[] = $post_id;
-		}	
+		}
+
+		// 2. Get posts marked noindex by Yoast
+		$yoast_noindex_ids = get_yoast_noindex_post_ids($ct_post_type); // Pass post type
+
+		// 3. Merge and remove duplicates
+		$excluded_posts_id = array_unique(array_merge($excluded_posts_id, $yoast_noindex_ids));
+
+		// Now $excluded_posts_id contains all excluded post IDs, including Yoast noindex	
 
 		
 
@@ -1151,37 +1161,75 @@ function ctas_create_sitemap() {
 
 		    $args = array( 
 			    'post_type' => $ct_post_type,
-    				'post_status' => 'publish',
-    				'exclude'	 => $excluded_posts_id,
-    				'numberposts' => -1,
-				    'tax_query' => array(
-				        array(
-				            'taxonomy' => $sitemap_by_tax,
-				            'terms'    => get_terms( $sitemap_by_tax, [ 'fields' => 'ids'  ] ),
-				            'operator' => 'NOT IN'
-				        )
-				    )
+			    //'posts_per_page' => 10,
+				'post_status' => 'publish',
+				'exclude'	 => $excluded_posts_id,
+				'numberposts' => -1,
+			    'tax_query' => array(
+			        array(
+			            'taxonomy' => $sitemap_by_tax,
+			            'terms'    => get_terms( $sitemap_by_tax, [ 'fields' => 'ids'  ] ),
+			            'operator' => 'NOT IN'
+			        )
+			    )
 			);
 
 			$posts_uncategorized = get_posts($args);
-
 			//echo '<pre>'; var_dump( $posts_uncategorized ); echo '</pre>'; //Enable to test
 
+			$total_uncategorized_posts = count($posts_uncategorized); //var_dump($total_uncategorized_posts); exit;
 
-			$file_name = 'sitemap-main-'. $post_type_name;
-			$file_name = sanitize_title($file_name).'.xml';
-
-			if( create_sitemap_file($posts_uncategorized, $file_name, $curr_freq, $curr_priority) ) 
+			if($total_uncategorized_posts > 1000 ) 
 			{
-				
-				$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
-				"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
-				"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
-				"\n\t" . '</sitemap>' . "\n";
+				$sitemap_part = 1;
+				$i=$total_uncategorized_posts;
+				$offset_posts = 0;
+				while($i>=0) 
+				{
+					$fetch_posts = get_posts(array(
+						'posts_per_page' => 2000,
+						'offset'      => $offset_posts,
+						'exclude'	 => $excluded_posts_id,
+					  	'post_type'  => array( $ct_post_type ), //array( 'post', 'page' ),
+					  	'order'    => 'DESC',
+					));
+
+					$file_name = 'sitemap-'. $post_type_name.'-part-'.$sitemap_part;
+					$file_name = sanitize_title($file_name).'.xml';
+
+					if( create_sitemap_file($fetch_posts, $file_name,$curr_freq, $curr_priority) ) {
+						$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
+						"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
+						"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+						"\n\t" . '</sitemap>' . "\n";
+					}
+					else { $error = 'Failed to create '.$file_name; }
+
+					$i = $i-2000;
+					$offset_posts = $offset_posts + 2000;
+					$sitemap_part++;
+				}
+				wp_reset_postdata();
+
+			} else {
+
+				$file_name = 'sitemap-main-'. $post_type_name;
+				$file_name = sanitize_title($file_name).'.xml';
+
+				if( create_sitemap_file($posts_uncategorized, $file_name, $curr_freq, $curr_priority) ) 
+				{
+					
+					$master_sitemap_fcon .= "\t" . '<sitemap>' . "\n" .
+					"\t\t" . '<loc>' . esc_url( home_url('/')  ) . $file_name.'</loc>' .
+					"\n\t\t" . '<lastmod>' . date( "c", current_time( 'timestamp', 0 ) ) .  '</lastmod>' .
+					"\n\t" . '</sitemap>' . "\n";
+
+				}
+				else { $error = 'Failed to create '.$file_name; }
+				wp_reset_postdata();
 
 			}
-			else { $error = 'Failed to create '.$file_name; }
-			wp_reset_postdata();
+			
 
 
 		}
@@ -1651,4 +1699,27 @@ function auto_update_products() {
 	  	echo '<div class="updated success-msg"><p>Products Updated.</p></div>';
 
 
+}
+
+
+
+/*
+ * Added in 2.4. 
+ * To respect all posts marked noindex by yoast. 
+*/
+function get_yoast_noindex_post_ids($post_type = 'page') {
+    global $wpdb;
+
+    return $wpdb->get_col($wpdb->prepare(
+        "
+        SELECT p.ID
+        FROM {$wpdb->posts} p
+        INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        WHERE pm.meta_key = '_wpseo_meta-robots-noindex'
+        AND pm.meta_value = '1'
+        AND p.post_type = %s
+        AND p.post_status = 'publish'
+        ",
+        $post_type
+    ));
 }
