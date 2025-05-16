@@ -7,7 +7,7 @@ Author: Vishal Gularia
 Author URI: https://clicktecs.com/
 Requires at least: 4.6.14
 Tested up to: 6.2
-Version: 2.4
+Version: 2.4.1
 License: GPL v2 or later
 package ctas
 */
@@ -512,12 +512,26 @@ function ctas_render_plugin_settings_page()
 	 							</tr>
 
 	 							<tr>
-	 								<td><h4>Exclude <?php echo $post_type_label; ?> by <?php echo $post_type->labels->singular_name; ?> ID</h4></td>
+	 								<td>
+	 									<h4>
+	 										Exclude <?php echo $post_type_label; ?> 
+	 										by 
+	 										<?php echo $post_type->labels->singular_name; ?> ID
+	 									</h4>
+	 								</td>
 	 								<td>
 
 	 									<input type="text" name="generate_sitemap[<?php echo $post_type_name;?>][excluded_posts_id]" class="input-big" value="<?php echo $existing_ctas_options[$post_type_name]['excluded_posts_id']; ?>" />
 
-	 									<div><small class="help-tip"> Use Comma separated numeric ID's. Work for all options.</small></div>
+	 									<div>
+	 										<small class="help-tip"> Use Comma separated numeric ID's. Work for all options.</small>
+	 										<br>
+	 										<small class="help-tip">
+	 											<?= ($post_type_label=='Pages' ? 
+	 											'Home Page already excluded here, as it goes to separate sitemap file.' : '');
+	 											?>
+	 										</small>
+	 									</div>
 
 	 								</td>
 	 							</tr>
@@ -894,12 +908,20 @@ function ctas_create_sitemap() {
 		$curr_priority = $ctas_options[$ct_post_type]['priority'];
 
 
+		$excluded_posts_id = array();
+
+		$front_page_id = get_option('page_on_front');
+
+		if($front_page_id && $ct_post_type == 'page') {
+			$excluded_posts_id[] = $front_page_id;
+		}
+
+
 		// 1. Get excluded posts from options
 		$excl_posts_sitemap_by_default = $ctas_options[$ct_post_type]['excluded_posts_id'];
 
 		$excl_posts = explode(',' ,$excl_posts_sitemap_by_default); //var_dump($excl_posts);
 
-		$excluded_posts_id = array();
 
 		foreach($excl_posts as $post_id )
 		{	
@@ -913,7 +935,7 @@ function ctas_create_sitemap() {
 		// 3. Merge and remove duplicates
 		$excluded_posts_id = array_unique(array_merge($excluded_posts_id, $yoast_noindex_ids));
 
-		// Now $excluded_posts_id contains all excluded post IDs, including Yoast noindex	
+		
 
 		
 
@@ -1240,8 +1262,25 @@ function ctas_create_sitemap() {
 			echo '<p>Sitemap Not Created for '.$curr_post_type_obj->label .' </p>';
 			echo '</div>';*/
 		}
+
+
+		/*
+		* Now $excluded_posts_id contains all excluded post IDs, including Yoast noindex. Save it back to DB. 
+		*/
+
+		// Convert to comma-separated string
+		$excluded_posts_str = implode(',', $excluded_posts_id);
+
+		// Update the options array
+		$ctas_options[$ct_post_type]['excluded_posts_id'] = $excluded_posts_str;
+
 		        
 	} //end foreach loop
+
+	
+	// Save the updated options back to the database
+	update_option('ctas_generate_sitemap', $ctas_options);
+
 
 	$master_sitemap_fcon .= '</sitemapindex>';
 
@@ -1537,6 +1576,13 @@ function auto_update_posts_modified_time()
 
 				//var_dump($excluded_posts_id); //Enable to check exclude post id
 
+				// Get posts marked noindex by Yoast
+				$yoast_noindex_ids = get_yoast_noindex_post_ids($ct_post_type); // Pass post type
+
+				// Merge and remove duplicates
+				$excluded_posts_id = array_unique(array_merge($excluded_posts_id, $yoast_noindex_ids));
+
+				// Fetch posts
 				$args = array(
 					'numberposts' => 10,
 					'posts_per_page' => 10,
@@ -1594,8 +1640,23 @@ function auto_update_posts_modified_time()
 
 				}
 
+				/*
+				* Now $excluded_posts_id contains all excluded post IDs, including Yoast noindex. Save it back to DB. 
+				*/
+
+				// Convert to comma-separated string
+				$excluded_posts_str = implode(',', $excluded_posts_id);
+
+				// Update the options array
+				$ctas_options[$ct_post_type]['excluded_posts_id'] = $excluded_posts_str;
+
+				
+
 			}
 		}
+		// Save the updated options back to the database
+		update_option('ctas_generate_sitemap', $ctas_options);
+
 }
 
 
@@ -1710,16 +1771,19 @@ function auto_update_products() {
 function get_yoast_noindex_post_ids($post_type = 'page') {
     global $wpdb;
 
-    return $wpdb->get_col($wpdb->prepare(
+    $post_ids = $wpdb->get_col( $wpdb->prepare(
         "
         SELECT p.ID
         FROM {$wpdb->posts} p
         INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-        WHERE pm.meta_key = '_wpseo_meta-robots-noindex'
+        WHERE pm.meta_key = '_yoast_wpseo_meta-robots-noindex'
         AND pm.meta_value = '1'
         AND p.post_type = %s
         AND p.post_status = 'publish'
         ",
         $post_type
     ));
+
+    //var_dump($post_ids); //exit;
+    return $post_ids;
 }

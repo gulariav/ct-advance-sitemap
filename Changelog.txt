@@ -1,6 +1,12 @@
 ========================
 Changelog
 ========================
+
+2.4.1
+- Saved noindex by yoast to database options, so they visible in plugin frontend next time.
+- Excluded home page from main pages sitemap list.
+- By Default included it in exclude list.
+
 2.4
 - Added support to respect noindex marked by yoast plugin. Ref. get_yoast_noindex_post_ids()
 
